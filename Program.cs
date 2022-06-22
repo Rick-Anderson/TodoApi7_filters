@@ -56,15 +56,19 @@ app.MapPost("/todoitems", async (Todo todo, TodoDb db) =>
 //    };
 //});
 
-bool IsValid(Todo td)
+string IsValid(Todo td)
 {
-    if (td.Id < 0 || td.Name!.Length < 3)
+    if (td.Id < 0)
     {
-        return false;
+        return "ID is less than 0";
+    }
+    else if( td.Name!.Length < 3)
+    {
+        return "Name length < 3";
     }
     else
     {
-        return true;
+        return String.Empty;
     }
 }
 
@@ -84,9 +88,11 @@ app.MapPut("/todoitems/{id}", async (int id, Todo inputTodo, TodoDb db) =>
 {
     var tdparam = (Todo)routeHandlerInvocationContext.Arguments[1]!;
 
-    if (!IsValid(tdparam))
+     var msg = IsValid(tdparam);
+
+    if (!String.IsNullOrEmpty(msg))
     {
-        return Results.Problem("The Todo is invalid.");
+        return Results.Problem(msg);
     }
     return await next(routeHandlerInvocationContext);
 });
