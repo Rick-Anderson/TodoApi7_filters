@@ -88,11 +88,11 @@ app.MapPut("/todoitems/{id}", async (int id, Todo inputTodo, TodoDb db) =>
 {
     var tdparam = (Todo)routeHandlerInvocationContext.Arguments[1]!;
 
-     var msg = IsValid(tdparam);
+     var validationError = IsValid(tdparam);
 
-    if (!String.IsNullOrEmpty(msg))
+    if (!String.IsNullOrEmpty(validationError))
     {
-        return Results.Problem(msg);
+        return Results.Problem(validationError);
     }
     return await next(routeHandlerInvocationContext);
 });
