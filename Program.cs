@@ -27,6 +27,47 @@ app.MapPost("/todoitems", async (Todo todo, TodoDb db) =>
     return Results.Created($"/todoitems/{todo.Id}", todo);
 });
 
+//app.MapPut("/todoitems/{id}", async (int id, Todo inputTodo, TodoDb db) =>
+//{
+//    var todo = await db.Todos.FindAsync(id);
+
+//    if (todo is null) return Results.NotFound();
+
+//    todo.Name = inputTodo.Name;
+//    todo.IsComplete = inputTodo.IsComplete;
+
+//    await db.SaveChangesAsync();
+
+//    return Results.NoContent();
+//}).AddFilter((routeHandlerContext, next) => {
+//    var parameters = routeHandlerContext.MethodInfo.GetParameters();
+//    var anyTodos = parameters.FindIndex(parameter => parameter.ParameterType == typeof(Todo));
+//    return async (invocationContext) =>
+//    {
+//        if (anyTodos >= 0)
+//        {
+//            var todoParameter = invocationContet.Parameters[anyTodos];
+//            if (!IsValid(todoParameter))
+//            {
+//                return Results.Problem("The Todo is invalid.");
+//            }
+//        }
+//        return await next(invocationContext);
+//    };
+//});
+
+bool IsValid(Todo td)
+{
+    if (td.Id < 0 || td.Name!.Length < 3)
+    {
+        return false;
+    }
+    else
+    {
+        return true;
+    }
+}
+
 app.MapPut("/todoitems/{id}", async (int id, Todo inputTodo, TodoDb db) =>
 {
     var todo = await db.Todos.FindAsync(id);
@@ -39,29 +80,17 @@ app.MapPut("/todoitems/{id}", async (int id, Todo inputTodo, TodoDb db) =>
     await db.SaveChangesAsync();
 
     return Results.NoContent();
-}).AddFilter((routeHandlerContext, next) => {
-    var parameters = routeHandlerContext.MethodInfo.GetParameters();
-    var anyTodos = parameters.FindIndex(parameter => parameter.ParameterType == typeof(Todo));
-    return async (invocationContext) =>
+}).AddFilter(async (routeHandlerInvocationContext, next) =>
+{
+    var tdparam = (Todo)routeHandlerInvocationContext.Arguments[1]!;
+
+    if (!IsValid(tdparam))
     {
-        if (anyTodos >= 0)
-        {
-            var todoParameter = invocationContet.Parameters[anyTodos];
-            if (!IsValid(todoParameter))
-            {
-                return Results.Problem("The Todo is invalid.");
-            }
-        }
-        return await next(invocationContext);
-    };
+        return Results.Problem("The Todo is invalid.");
+    }
+    return await next(routeHandlerInvocationContext);
 });
 
-bool IsValid(object todoParameter)
-{
-    throw new NotImplementedException();
-}
-
-#region snippet_delete
 app.MapDelete("/todoitems/{id}", async (int id, TodoDb db) =>
 {
     if (await db.Todos.FindAsync(id) is Todo todo)
@@ -73,7 +102,6 @@ app.MapDelete("/todoitems/{id}", async (int id, TodoDb db) =>
 
     return Results.NotFound();
 });
-#endregion
 
 app.Run();
 
